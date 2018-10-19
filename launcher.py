@@ -18,10 +18,24 @@ rawext = '.raw'
 def getNewestDir(dirlist):
     if len(dirlist) == 0:
         return None
+    
+    firstdir = None
 
-    dirTime1 = os.path.getctime(monitorDir + dirlist[0])
-    newestdir = dirlist[0]
     for dir in dirlist:
+        if os.path.isdir(monitorDir + dir):
+            firstdir = dir
+            break
+    
+    if firstdir is None:
+        return None
+
+    dirTime1 = os.path.getctime(monitorDir + firstdir)
+    newestdir = firstdir
+
+    for dir in dirlist:
+        if os.path.isfile(monitorDir + dir):
+            continue
+
         dirTime2 = os.path.getctime(monitorDir + dir)
         if dirTime2 > dirTime1:
             dirTime1 = dirTime2
@@ -38,7 +52,7 @@ def getRawFiles(rawdir):
     for file in os.listdir(rawdir):
         base,ext = os.path.splitext(file)
         if ext == rawext:
-            rawfiles.append(rawfiles + newestdir + base + ext)
+            rawfiles.append(monitorDir + newestDir + base + ext)
     return rawfiles
 
 
@@ -71,6 +85,8 @@ while True:
 
     for raw in rawFiles:
         if not raw in currentProcs:
-            currentProcs[raw] = subprocess.Popen(monitorcmd + raw, shell=True)
+            currentProcs[raw] = subprocess.Popen(monitorcmd + raw,stdin=subprocess.PIPE
+                                                 ,stdout=subprocess.PIPE
+                                                 ,stderr=subprocess.PIPE ,shell=True)
 
     time.sleep(1)

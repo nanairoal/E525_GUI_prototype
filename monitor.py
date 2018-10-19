@@ -58,7 +58,11 @@ def updatehist():
 
 try:
     while True:
-        readEvents(monitorFile())
+        n = monitorFile()
+        if n == 0:
+            time.sleep(0.001)
+            continue
+        readEvents(n)
         updatehist()
 except tkinter.TclError:
         f.close()
