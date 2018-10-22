@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.path as path
 import matplotlib.patches as patches
+from   matplotlib.widgets import RadioButtons
 import struct
 import time
 import os
@@ -13,7 +14,7 @@ if(len(sys.argv) < 2):
     print(msg)
     sys.exit(-1)
 
-SMP = 2050
+SMP = 1030
 BASE = 8190
 NBIN = 1000
 AUTORANGE = True
@@ -47,6 +48,7 @@ verts[2::5, 1] = top
 verts[3::5, 0] = right
 verts[3::5, 1] = bottom
 
+fig, ax = plt.subplots()
 i = 0
 while i < SMP:
     format += 'i'
@@ -78,7 +80,6 @@ def readEvents(n):
 def update_xlim(bins):
     left = np.array(bins[:-1])
     right = np.array(bins[1:])
-    bottom = np.zeros(NBIN)
     verts[0::5, 0] = left
     verts[0::5, 1] = bottom
     verts[1::5, 0] = left
@@ -91,7 +92,7 @@ def update_xlim(bins):
 def updatehist(sub_events,axes):
     if sub_events.size == 0:
         return
-    plt.title(sys.argv[1]+" Events:"+str(events.size))
+    axes.set_title(sys.argv[1]+" Events:"+str(events.size))
     n, bins = np.empty(0),np.empty(0)
 
     if AUTORANGE:
@@ -126,6 +127,7 @@ def update_monitor(axes):
     n = monitorFile()
     if n == 0:
         time.sleep(0.001)
+        axes.figure.canvas.draw()
         return
     sub_events = readEvents(n)
     events = np.append(events,sub_events)
@@ -135,12 +137,15 @@ def update_monitor(axes):
 
 def onpress(button_event):
     global zoom
-
+    
     if not button_event.dblclick:
         return
+    if not button_event.inaxes is ax:
+        return
+    
+    x, y = button_event.xdata, button_event.ydata
 
     if not zoom:
-        x, y = button_event.xdata, button_event.ydata
         dx = (xlim[1] - xlim[0])/2/10
         dy = (verts[1::5,1].max()-bottom.min())/2/10
         
@@ -151,16 +156,23 @@ def onpress(button_event):
         zoom = True
     else:
         ax.set_xlim(xlim)
-        ax.set_ylim(0,verts[1::5,1].max())
+        ax.set_ylim(0.001,verts[1::5,1].max())
         zoom = False
 
-fig, ax = plt.subplots()
+def change_scale(label):
+    if label == 'Log':
+        subticks = [1,2,3,4,5,6,7,8,9]
+        ax.set_yscale('symlog',basey = 10 ,nonposy="mask",subsy=subticks)
+    if label == 'Linear':
+        ax.set_yscale('linear')
+        
 barpath = path.Path(verts, codes)
 patch = patches.PathPatch(barpath,edgecolor='none')
 
 ax.add_patch(patch)
 ax.set_xlim(left[0], right[-1])
 ax.set_ylim(bottom.min(),top.max())
+plt.subplots_adjust(left=0.3)
 
 plt.xlabel('Integrated pulse')
 plt.ylabel('Counts')
@@ -171,4 +183,7 @@ timer.start()
 
 fig.canvas.mpl_connect('button_press_event',onpress)
 
+rax = plt.axes([0.01, 0.7, 0.15, 0.15], facecolor='lightgoldenrodyellow')
+radio = RadioButtons(rax, ('Linear', 'Log'))
+radio.on_clicked(change_scale)
 plt.show()
