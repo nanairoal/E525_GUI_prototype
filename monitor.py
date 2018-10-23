@@ -9,18 +9,76 @@ import time
 import os
 import tkinter
 
+
+SMP = 2050
+BASE = 8190
+NBIN = 1000
+AUTORANGE = True
+P = [0,1,0]
+XLABEL = 'Integrated Pulse'
+ENABLE = True
+xlim = [-5000,600000]
+    
+def getBool(param):
+    if param == 'T':
+        return True
+    else:
+        return False
+
+
+def readConfig(line):
+    global SMP,BASE, NBIN
+    global AUTORANGE, ENABLE
+    global xlim, P
+    global XLABEL
+    
+    if(len(line) == 0):
+        return
+    
+    words = line.split('=')
+    words[0] = words[0].strip()
+    words[1] = words[1].strip()
+
+    if words[0] == 'baseline':
+        BASE = float(words[1])
+    elif words[0] == 'p0':
+        P[0] = float(words[1])
+    elif words[0] == 'p1':
+        P[1] = float(words[1])
+    elif words[0] == 'p2':
+        P[2] = float(words[1])
+    elif words[0] == 'xmin':
+        xlim[0] = float(words[1])
+    elif words[0] == 'xmax':
+        xlim[1] = float(words[1])
+    elif words[0] == 'nbin':
+        NBIN = int(words[1])
+    elif words[0] == 'sampling':
+        SMP = int(words[1])
+    elif words[0] == 'auto_range':
+        AUTORANGE = getBool(words[1])
+    elif words[0] == 'enable':
+        ENABLE =  getBool(words[1])
+    elif words[0] == 'xlabel':
+        XLABEL = words[1]
+
 if(len(sys.argv) < 2):
     msg = 'Usage:' + sys.argv[0] + ' [Binary Data]'
     print(msg)
     sys.exit(-1)
 
-SMP = 1030
-BASE = 8190
-NBIN = 1000
-AUTORANGE = True
+if(len(sys.argv) >= 3):
+    try:
+        with open(sys.argv[2]) as conf_file:
+            for line in conf_file.readlines():
+                readConfig(line)
+    except IOError:
+        print(sys.argv[2] + " cannot be opened.")
+
+if not ENABLE:
+    sys.exit(0)
 
 zoom = False
-xlim = [-5000,600000]
 f = open(sys.argv[1],'rb')
 format = ''
 singleEvent = np.empty(SMP,dtype='i4')
@@ -71,11 +129,13 @@ def readEvents(n):
     while i < n:
         c = f.read(4*SMP)
         if not c:break
-        singleEvent = struct.unpack(format,c)
+        singleEvent = struct.unpack(format, c)
         sum = np.sum(singleEvent)
-        sub_events = np.append(sub_events,-sum+SMP*BASE)
+        pulse = -sum+SMP*BASE
+        sub_events = np.append(sub_events, pulse*pulse*P[2] + pulse*P[1] + P[0])
         i += 1
     return sub_events
+
 
 def update_xlim(bins):
     left = np.array(bins[:-1])
@@ -156,7 +216,7 @@ def onpress(button_event):
         zoom = True
     else:
         ax.set_xlim(xlim)
-        ax.set_ylim(0.001,verts[1::5,1].max())
+        ax.set_ylim(0,verts[1::5,1].max())
         zoom = False
 
 def change_scale(label):
@@ -174,7 +234,7 @@ ax.set_xlim(left[0], right[-1])
 ax.set_ylim(bottom.min(),top.max())
 plt.subplots_adjust(left=0.3)
 
-plt.xlabel('Integrated pulse')
+plt.xlabel(XLABEL)
 plt.ylabel('Counts')
 
 timer = fig.canvas.new_timer(interval=1000)

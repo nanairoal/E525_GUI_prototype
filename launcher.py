@@ -13,7 +13,7 @@ monitorDir = sys.argv[1] + '/'
 currentProcs = {}
 monitorcmd = 'python3 monitor.py '
 rawext = '.raw'
-
+conf = ('ch0.conf', 'ch1.conf', 'ch2.conf', 'ch3.conf', 'ch4.conf', 'ch5.conf', 'ch6.conf', 'ch7.conf')
 
 def getNewestDir(dirlist):
     if len(dirlist) == 0:
@@ -84,9 +84,11 @@ while True:
     rawFiles = getRawFiles(monitorDir + newestDir)
 
     for raw in rawFiles:
-        if not raw in currentProcs:
-            currentProcs[raw] = subprocess.Popen(monitorcmd + raw,stdin=subprocess.PIPE
-                                                 ,stdout=subprocess.PIPE
-                                                 ,stderr=subprocess.PIPE ,shell=True)
+        for i in range(7):
+            if 'ch' + str(i) in raw:
+                if not raw in currentProcs:
+                    currentProcs[raw] = subprocess.Popen(monitorcmd + raw + ' ' + conf[i],stdin=subprocess.PIPE
+                                                         ,stdout=subprocess.PIPE
+                                                         ,stderr=subprocess.PIPE ,shell=True)
 
     time.sleep(1)
