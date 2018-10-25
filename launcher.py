@@ -11,9 +11,9 @@ if len(sys.argv) < 1:
 
 newestDir = ''
 #monitorDir = sys.argv[1] + '/'
-monitorDir = '/home/assy/Work/E525/data/raw/'
+monitorDir = '../E525_GUI/Testdir/'
 currentProcs = {}
-monitorcmd = 'python3 monitor.py '
+monitorcmd = 'python3 monitor_with_time.py '
 rawext = '.raw'
 conf = ('ch0.conf', 'ch1.conf', 'ch2.conf', 'ch3.conf', 'ch4.conf', 'ch5.conf', 'ch6.conf', 'ch7.conf')
 

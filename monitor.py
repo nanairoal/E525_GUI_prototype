@@ -18,6 +18,7 @@ P = [0,1,0]
 XLABEL = 'Integrated Pulse'
 ENABLE = True
 xlim = [-5000,600000]
+TITLE = ''
     
 def getBool(param):
     if param == 'T':
@@ -30,7 +31,7 @@ def readConfig(line):
     global SMP,BASE, NBIN
     global AUTORANGE, ENABLE
     global xlim, P
-    global XLABEL
+    global XLABEL,TITLE
     
     if(len(line) == 0):
         return
@@ -61,6 +62,8 @@ def readConfig(line):
         ENABLE =  getBool(words[1])
     elif words[0] == 'xlabel':
         XLABEL = words[1]
+    elif words[0] == 'title':
+        TITLE = words[1]
 
 if(len(sys.argv) < 2):
     msg = 'Usage:' + sys.argv[0] + ' [Binary Data]'
@@ -107,6 +110,10 @@ verts[3::5, 0] = right
 verts[3::5, 1] = bottom
 
 fig, ax = plt.subplots()
+
+if TITLE != '':
+    fig.canvas.set_window_title(TITLE)
+
 i = 0
 while i < SMP:
     format += 'i'
@@ -131,7 +138,7 @@ def readEvents(n):
         if not c:break
         singleEvent = struct.unpack(format, c)
         sum = np.sum(singleEvent)
-        pulse = -sum+SMP*BASE
+        pulse = abs(-sum+SMP*BASE)
         sub_events = np.append(sub_events, pulse*pulse*P[2] + pulse*P[1] + P[0])
         i += 1
     return sub_events
@@ -149,10 +156,16 @@ def update_xlim(bins):
     verts[3::5, 0] = right
     verts[3::5, 1] = bottom
 
+
 def updatehist(sub_events,axes):
     if sub_events.size == 0:
         return
-    axes.set_title(sys.argv[1]+" Events:"+str(events.size))
+
+        if TITLE == '':
+            axes.set_title(sys.argv[1]+" Events:"+str(events.size))
+        else:
+            axes.set_title(TITLE+' Events:'+str(events[0].size))
+
     n, bins = np.empty(0),np.empty(0)
 
     if AUTORANGE:
