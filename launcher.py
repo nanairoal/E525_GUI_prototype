@@ -5,17 +5,21 @@ import time
 import signal
 
 #if len(sys.argv) < 2:
-if len(sys.argv) < 1:
-    print('Usage:' + './' + sys.argv[0] + ' [dataDir]')
+if len(sys.argv) < 2:
+    print('Usage:' + './' + sys.argv[0] + ' [monitor.py or monitor_with_time.py]')
     sys.exit(-1)
 
 newestDir = ''
 #monitorDir = sys.argv[1] + '/'
-monitorDir = '../E525_GUI/Testdir/'
+monitorDir = '/home/assy/Work/E525/data/raw//'
 currentProcs = {}
-monitorcmd = 'python3 monitor_with_time.py '
+monitorcmd = 'python3 ' + sys.argv[1] + ' '
 rawext = '.raw'
 conf = ('ch0.conf', 'ch1.conf', 'ch2.conf', 'ch3.conf', 'ch4.conf', 'ch5.conf', 'ch6.conf', 'ch7.conf')
+
+if not os.path.isdir(monitorDir):
+    print(monitorDir + ' does not exist')
+    exit(-1)
 
 def getNewestDir(dirlist):
     if len(dirlist) == 0:

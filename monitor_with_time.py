@@ -283,8 +283,7 @@ def updatehist(sub_events,axes):
 
 def update_monitor(axes):
     global events
-    #n = monitorFile()
-    n = 100
+    n = monitorFile()
     if n == 0:
         time.sleep(0.001)
         axes.figure.canvas.draw()

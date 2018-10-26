@@ -160,11 +160,11 @@ def update_xlim(bins):
 def updatehist(sub_events,axes):
     if sub_events.size == 0:
         return
-
-        if TITLE == '':
-            axes.set_title(sys.argv[1]+" Events:"+str(events.size))
-        else:
-            axes.set_title(TITLE+' Events:'+str(events[0].size))
+        
+    if TITLE == '':
+        axes.set_title(sys.argv[1]+" Events:"+str(events.size))
+    else:
+        axes.set_title(TITLE+' Events:'+str(events.size))
 
     n, bins = np.empty(0),np.empty(0)
 
@@ -205,7 +205,6 @@ def update_monitor(axes):
     sub_events = readEvents(n)
     events = np.append(events,sub_events)
     updatehist(sub_events,axes)
-
     axes.figure.canvas.draw()
 
 def onpress(button_event):
