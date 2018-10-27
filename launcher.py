@@ -11,7 +11,7 @@ if len(sys.argv) < 2:
 
 newestDir = ''
 #monitorDir = sys.argv[1] + '/'
-monitorDir = '/home/assy/Work/E525/data/raw//'
+monitorDir = '../E525_GUI/Testdir/'
 currentProcs = {}
 monitorcmd = 'python3 ' + sys.argv[1] + ' '
 rawext = '.raw'
@@ -94,7 +94,6 @@ while True:
             if 'ch' + str(i) in raw:
                 if not raw in currentProcs:
                     currentProcs[raw] = subprocess.Popen(monitorcmd + raw + ' ./monitor_conf/' + conf[i],stdin=subprocess.PIPE
-                                                         ,stdout=subprocess.PIPE
-                                                         ,stderr=subprocess.PIPE ,shell=True)
+                                                         ,shell=True)
 
     time.sleep(1)

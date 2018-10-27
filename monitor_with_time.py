@@ -26,6 +26,7 @@ PULSE_th = 80
 TIME_MAX = SMP
 DISPLAY_EXTRA_TIME = True
 POLAR = False
+RF_BASE = BASE
 
 def getBool(param):
     if param == 'T':
@@ -39,7 +40,7 @@ def readConfig(line):
     global AUTORANGE, ENABLE, DISPLAY_EXTRA_TIME, POLAR
     global xlim, P
     global XLABEL,TITLE,RF
-    global RF_th, PULSE_th, TIME_MAX
+    global RF_th, PULSE_th, TIME_MAX, RF_BASE
     
     if(len(line) == 0):
         return
@@ -84,7 +85,8 @@ def readConfig(line):
         DISPLAY_EXTRA_TIME = getBool(words[1])
     elif words[0] == 'polar':
         POLAR =  getBool(words[1])
-
+    elif words[0] == 'RF_base':
+        RF_BASE = int(words[1])
 
 if(len(sys.argv) < 2):
     msg = 'Usage:' + sys.argv[0] + ' [Binary Data]'
@@ -109,7 +111,12 @@ events = [np.empty(0,dtype='f8'),np.empty(0,dtype='f8')]
 filesize = 0
 
 if RF != '':
-    f_rf = open(re.sub(r'ch[0-9]','ch' + RF,sys.argv[1]), 'rb')
+    try:
+        rf_file = re.sub('ch[0-9]','ch'+RF,sys.argv[1])
+        f_rf = open(rf_file,'rb')
+    except IOError:
+        print("RF file: "+rf_file + ' cannot be opened.')
+        RF = ''
 
 n,bins = np.histogram(np.zeros(1),NBIN,range=xlim)
 
@@ -190,7 +197,7 @@ def time_diff(rf_pulse, pulse):
         return -1
     
     for j,rf_data in enumerate(rf_pulse[pulse_t:], pulse_t):
-        if rf_data <= BASE - RF_th:
+        if rf_data <= RF_BASE - RF_th:
             rf_t = j
             break
     
@@ -212,6 +219,7 @@ def readEvents(n):
 
         if RF != '':
             c = f_rf.read(4*SMP)
+            if not c:continue
             singleRFEvent = struct.unpack(format, c)
             diff = time_diff(singleRFEvent, singleEvent)
             if diff >= 0:
@@ -286,7 +294,7 @@ def update_monitor(axes):
     n = monitorFile()
     if n == 0:
         time.sleep(0.001)
-        axes.figure.canvas.draw()
+        axes[0].figure.canvas.draw()
         return
     sub_events = readEvents(n)
     events[0] = np.append(events[0], sub_events[0])
