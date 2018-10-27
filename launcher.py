@@ -11,7 +11,7 @@ if len(sys.argv) < 2:
 
 newestDir = ''
 #monitorDir = sys.argv[1] + '/'
-monitorDir = '../E525_GUI/Testdir/'
+monitorDir = '/home/assy/Work/E525/data/raw/'
 currentProcs = {}
 monitorcmd = 'python3 ' + sys.argv[1] + ' '
 rawext = '.raw'

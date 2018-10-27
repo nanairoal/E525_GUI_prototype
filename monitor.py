@@ -137,8 +137,8 @@ def readEvents(n):
         c = f.read(4*SMP)
         if not c:break
         singleEvent = struct.unpack(format, c)
-        sum = np.sum(singleEvent)
-        pulse = abs(-sum+SMP*BASE)
+        singleEvent_np = np.array(singleEvent) - BASE
+        sum = np.sum(singleEvent_np)
         sub_events = np.append(sub_events, pulse*pulse*P[2] + pulse*P[1] + P[0])
         i += 1
     return sub_events
