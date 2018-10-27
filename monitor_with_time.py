@@ -213,8 +213,12 @@ def readEvents(n):
         c = f_hist.read(4*SMP)
         if not c:break
         singleEvent = struct.unpack(format, c)
-        sum = np.sum(singleEvent)
-        pulse = abs(-sum+SMP*BASE)
+
+        #sum = np.sum(singleEvent)
+        #pulse = sum - SMP*BASE
+        for j in range(125):
+            pulse = singleEvent[j]
+        pulse /= 125
         sub_events[0] = np.append(sub_events[0], pulse*pulse*P[2] + pulse*P[1] + P[0])
 
         if RF != '':
