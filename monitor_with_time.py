@@ -27,6 +27,8 @@ TIME_MAX = SMP
 DISPLAY_EXTRA_TIME = True
 POLAR = False
 RF_BASE = BASE
+SKIP_BASE = -1
+CALC_BASE = False
 
 def getBool(param):
     if param == 'T':
@@ -37,11 +39,11 @@ def getBool(param):
 
 def readConfig(line):
     global SMP,BASE, NBIN
-    global AUTORANGE, ENABLE, DISPLAY_EXTRA_TIME, POLAR
+    global AUTORANGE, ENABLE, DISPLAY_EXTRA_TIME, POLAR, CALC_BASE
     global xlim, P
     global XLABEL,TITLE,RF
     global RF_th, PULSE_th, TIME_MAX, RF_BASE
-    
+    global SKIP_BASE
     if(len(line) == 0):
         return
     
@@ -87,6 +89,11 @@ def readConfig(line):
         POLAR =  getBool(words[1])
     elif words[0] == 'RF_base':
         RF_BASE = int(words[1])
+    elif words[0] == 'skip_base':
+        SKIP_BASE = float(words[1])
+    elif words[0] == 'calc_base':
+        CALC_BASE = getBool(words[1])
+
 
 if(len(sys.argv) < 2):
     msg = 'Usage:' + sys.argv[0] + ' [Binary Data]'
@@ -203,20 +210,36 @@ def time_diff(rf_pulse, pulse):
     
     return rf_t - pulse_t
 
+def calcBase(singleEvent):
+    base_area = 125
+    base = np.sum(singleEvent[0:base_area])
+    return base/base_area
+
 
 def readEvents(n):
-    global events
+    global events,BASE
     sub_events = [np.empty(0,dtype='f8'), np.empty(0,dtype='f8')]
+    singleEvent_np = np.empty(SMP,dtype='f8')
     i = 0
     sum = 0.0
     while i < n:
         c = f_hist.read(4*SMP)
         if not c:break
         singleEvent = struct.unpack(format, c)
-        singleEvent_np = np.array(singleEvent) - BASE
-        sum = np.sum(singleEvent_np)
-        pulse = abs(sum)
- 
+        singleEvent_np = np.array(singleEvent)
+
+        if CALC_BASE:
+            BASE = calcBase(singleEvent)
+
+
+        if(SKIP_BASE > 0):
+            base_single = calcBase(singleEvent_np)
+            if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
+                continue;
+            if SKIP_BASE < 0 and bae_single < BASE*SKIP_BASE:
+                continue;
+
+        pulse = np.sum(np.abs(singleEvent_np-BASE))
         sub_events[0] = np.append(sub_events[0], pulse*pulse*P[2] + pulse*P[1] + P[0])
 
         if RF != '':
@@ -271,7 +294,7 @@ def updatehist(sub_events,axes):
         if xlim[0] > sub_events.min():
             xlim[0] = sub_events.min()
             change = True
-
+        
         if change:
             n, bins = np.histogram(events[0], NBIN,range=xlim)
             update_xlim(bins)
