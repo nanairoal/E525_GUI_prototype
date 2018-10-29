@@ -235,9 +235,9 @@ def readEvents(n):
         if(SKIP_BASE > 0):
             base_single = calcBase(singleEvent_np)
             if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
-                continue;
-            if SKIP_BASE < 0 and bae_single < BASE*SKIP_BASE:
-                continue;
+                continue
+            if SKIP_BASE < 0 and base_single < BASE*SKIP_BASE:
+                continue
 
         pulse = np.sum(np.abs(singleEvent_np-BASE))
         sub_events[0] = np.append(sub_events[0], pulse*pulse*P[2] + pulse*P[1] + P[0])

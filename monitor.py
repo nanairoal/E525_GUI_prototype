@@ -143,6 +143,7 @@ def calcBase(singleEvent):
 def readEvents(n):
     global singleEvents
     global events
+    global BASE
     sub_events = np.empty(0,dtype='f8')
     i = 0
     sum = 0.0
@@ -157,9 +158,9 @@ def readEvents(n):
         if(SKIP_BASE > 0):
             base_single = calcBase(singleEvent_np)
             if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
-                continue;
+                continue
             if SKIP_BASE < 0 and bae_single < BASE*SKIP_BASE:
-                continue;
+                continue
 
         pulse = np.sum(np.abs(singleEvent_np-BASE))
         sub_events = np.append(sub_events, pulse*pulse*P[2] + pulse*P[1] + P[0])
