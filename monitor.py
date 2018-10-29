@@ -19,6 +19,8 @@ XLABEL = 'Integrated Pulse'
 ENABLE = True
 xlim = [-5000,600000]
 TITLE = ''
+SKIP_BASE = -1
+CALC_BASE = False
     
 def getBool(param):
     if param == 'T':
@@ -28,10 +30,11 @@ def getBool(param):
 
 
 def readConfig(line):
-    global SMP,BASE, NBIN
+    global SMP,BASE, NBIN, CALC_BASE
     global AUTORANGE, ENABLE
     global xlim, P
     global XLABEL,TITLE
+    global SKIP_BASE
     
     if(len(line) == 0):
         return
@@ -64,6 +67,10 @@ def readConfig(line):
         XLABEL = words[1]
     elif words[0] == 'title':
         TITLE = words[1]
+    elif words[0] == 'skip_base':
+        SKIP_BASE = float(words[1])
+    elif words[0] == 'calc_base':
+        CALC_BASE = getBool(words[1])
 
 if(len(sys.argv) < 2):
     msg = 'Usage:' + sys.argv[0] + ' [Binary Data]'
@@ -127,6 +134,12 @@ def monitorFile():
     return nevent
 
 
+def calcBase(singleEvent):
+    base_area = 125
+    base = np.sum(singleEvent[0:base_area])
+    return base/base_area
+
+
 def readEvents(n):
     global singleEvents
     global events
@@ -137,8 +150,18 @@ def readEvents(n):
         c = f.read(4*SMP)
         if not c:break
         singleEvent = struct.unpack(format, c)
-        singleEvent_np = np.array(singleEvent) - BASE
-        pubse = abs(np.sum(singleEvent_np))
+        singleEvent_np = np.array(singleEvent)
+        if CALC_BASE:
+            BASE = calcBase(singleEvent)
+
+        if(SKIP_BASE > 0):
+            base_single = calcBase(singleEvent_np)
+            if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
+                continue;
+            if SKIP_BASE < 0 and bae_single < BASE*SKIP_BASE:
+                continue;
+
+        pulse = np.sum(np.abs(singleEvent_np-BASE))
         sub_events = np.append(sub_events, pulse*pulse*P[2] + pulse*P[1] + P[0])
         i += 1
     return sub_events
