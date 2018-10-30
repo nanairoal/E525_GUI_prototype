@@ -171,8 +171,10 @@ fig, axs = plt.subplots(1,2, figsize=(12.8, 4.8))
 ax = axs[0]
 ax_r = axs[1]
 
+run =  os.path.basename(sys.argv[1]).split('.')[0]
+fig.canvas.set_window_title(run)
 if TITLE != '':
-    fig.canvas.set_window_title(TITLE)
+    fig.canvas.set_window_title(TITLE + ' : '+run)
 
 i = 0
 while i < SMP:
@@ -222,35 +224,47 @@ def readEvents(n):
     singleEvent_np = np.empty(SMP,dtype='f8')
     i = 0
     sum = 0.0
-    while i < n:
-        c = f_hist.read(4*SMP)
-        if not c:break
-        singleEvent = struct.unpack(format, c)
-        singleEvent_np = np.array(singleEvent)
+    try:
+        while i < n:
+            c = f_hist.read(4*SMP)
+            if not c:break
+            while len(c) != 4*SMP:
+                time.sleep(0.001)
+                c2 = f_hist.read(4*SMP - len(c))
+                c += c2
 
-        if CALC_BASE:
-            BASE = calcBase(singleEvent)
+            singleEvent = struct.unpack(format, c)
+            singleEvent_np = np.array(singleEvent)
+            
+            if CALC_BASE:
+                BASE = calcBase(singleEvent)
 
 
-        if(SKIP_BASE > 0):
-            base_single = calcBase(singleEvent_np)
-            if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
-                continue
-            if SKIP_BASE < 0 and base_single < BASE*SKIP_BASE:
-                continue
+                if(SKIP_BASE > 0):
+                    base_single = calcBase(singleEvent_np)
+                    if SKIP_BASE >= 1 and base_single > BASE*SKIP_BASE:
+                        if RF != '': c=f_rf.read(4*SMP)
+                        continue
+                    if SKIP_BASE < 0 and base_single < BASE*SKIP_BASE:
+                        if RF != '': c=f_rf.read(4*SMP)
+                        continue
 
-        pulse = np.sum(np.abs(singleEvent_np-BASE))
-        sub_events[0] = np.append(sub_events[0], pulse*pulse*P[2] + pulse*P[1] + P[0])
+            pulse = np.sum(np.abs(singleEvent_np-BASE))
+            sub_events[0] = np.append(sub_events[0], pulse*pulse*P[2] + pulse*P[1] + P[0])
 
-        if RF != '':
-            c = f_rf.read(4*SMP)
-            if not c:continue
-            singleRFEvent = struct.unpack(format, c)
-            diff = time_diff(singleRFEvent, singleEvent)
-            if diff >= 0:
-                sub_events[1] = np.append(sub_events[1], diff)
+            if RF != '':
+                c = f_rf.read(4*SMP)
+                if not c:continue
+                singleRFEvent = struct.unpack(format, c)
+                diff = time_diff(singleRFEvent, singleEvent)
+                if diff >= 0:
+                    sub_events[1] = np.append(sub_events[1], diff)
 
-        i += 1
+            i += 1
+    except struct.error:
+        print('chunck size')
+        print(len(c))
+        sys.exit(-1)
     return sub_events
 
 
